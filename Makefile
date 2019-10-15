@@ -37,6 +37,13 @@ endif
 ifeq ($(ARCH),arm64)
 stage3_arch := armv7a
 qemu_arch := aarch64
+
+$(progress_dir)/arm64_rebuild: chroot-ready
+	@echo because there is no pre built stage3 for arm64, we rebuild most of it
+	chroot $(root_dir) emerge -e @system
+	touch $@
+
+chroot: $(progress_dir)/arm64_rebuild
 endif
 
 distfiles := http://distfiles.gentoo.org/
@@ -80,22 +87,13 @@ $(progress_tmp_dir)/root_subdir_mounted: | $(progress_tmp_dir) $(progress_dir)/s
 $(root_dir)/etc/resolv.conf: /etc/resolv.conf | $(progress_dir)/stage3_extracted
 	cp $< $@
 
+.PHONY: chroot-ready
+chroot-ready: $(root_dir)/etc/resolv.conf $(progress_tmp_dir)/root_subdir_mounted | $(progress_tmp_dir)/qemu-binfmt_started
+
 .PHONY: chroot
-chroot: $(root_dir)/etc/resolv.conf $(progress_tmp_dir)/root_subdir_mounted | $(progress_tmp_dir)/qemu-binfmt_started
+chroot: chroot-ready
 	chroot $(root_dir) /bin/bash
 
-
-ifndef FLASH_DEV
-ifneq ($(filter \
-	flash-init \
-	$(progress_dir)/flash_layouted \
-	$(progress_dir)/flash_parted \
-	flash-mount \
-	$(progress_tmp_dir)/flash_mounted \
-	,$(MAKECMDGOALS)),)
-$(error define FLASH_DEV to the disk you want to use))
-endif
-endif
 
 .PHONY: flash-init
 flash-init: $(progress_dir)/flash_parted
@@ -110,6 +108,7 @@ $(progress_dir)/flash_parted: /usr/sbin/mkfs.f2fs | $(progress_dir)/flash_layout
 	$< $(FLASH_DEV)p1
 	$< $(FLASH_DEV)p2
 	touch $@
+
 
 .PHONY: flash-mount
 flash-mount: $(progress_tmp_dir)/flash_mounted
