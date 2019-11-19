@@ -80,12 +80,10 @@ $(progress_tmp_dir)/boot_mounted: $(progress_tmp_dir)/root_mounted | $(progress_
 	mount $(partition_1) $(root_dir)/boot
 	touch $@
 
-.PHONY: flash-umount
-flash-umount:
-	umount -q $(root_dir)
-	umount -q $(root_dir)/boot
-	rm $<
-
+.PHONY: disk-umount
+disk-umount: $(progress_tmp_dir)/root_mounted $(progress_tmp_dir)/boot_mounted
+	umount -Rq $(root_dir)
+	rm -f $^
 
 ## SYSTEM INSTALL ##
 
@@ -170,8 +168,7 @@ boot-install:
 ## CLEAN ##
 
 .PHONY: clean
-clean:
-	umount -Rq $(root_dir)
+clean: disk-umount 
 	rm -rf $(progress_dir)
 	rm -rf $(progress_tmp_dir)
 	rm -rf $(dist_dir)
