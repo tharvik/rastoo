@@ -119,7 +119,14 @@ snapshot_extracted: | $(root_dir)/var/db/repos/gentoo
 
 $(root_dir)/var/db/repos/gentoo: chroot-ready | $(root_dir)/usr/bin/emerge-webrsync
 	chroot $(root_dir) /usr/bin/emerge-webrsync
-	echo 'FEATURES="$${FEATURES} -pid-sandbox"' >> $(root_dir)/etc/portage/make.conf
+	echo '\n# Bypass bugs in qemu-chrooting\nFEATURES="$${FEATURES} -pid-sandbox"' >> $(root_dir)/etc/portage/make.conf
+
+
+## BOOT INSTALL ## 
+
+.PHONY: boot-install
+boot-install:
+	@echo not implemented
 
 
 ### CHROOT ###
@@ -156,13 +163,6 @@ $(root_dir)/usr/bin/qemu-$(qemu_arch): | /usr/bin/qemu-$(qemu_arch)
 
 /usr/bin/qemu-$(qemu_arch):
 	emerge $(qemu_atom)
-
-
-## BOOT INSTALL ## 
-
-.PHONY: boot-install
-boot-install:
-	@echo not implemented
 
 
 ## CLEAN ##
