@@ -111,7 +111,7 @@ system-install: stage3_extracted snapshot_extracted
 stage3_extracted: | $(root_dir)/usr/bin/emerge-webrsync #among others...
 
 $(root_dir)/usr/bin/emerge-webrsync: | $(dist_dir)/$(stage3_name) $(root_dir)
-	tar xpjf $< --xattrs-include='*.*' --numeric-owner -C $(root_dir)
+	tar xpjf $(dist_dir)/$(stage3_name) --xattrs-include='*.*' --numeric-owner -C $(root_dir)
 
 $(dist_dir)/$(stage3_name): | $(dist_dir)
 	curl $(distfiles_stage3)/$(stage3_subdir) -o $@
