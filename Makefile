@@ -41,14 +41,14 @@ root_dir ?= root
 ### DISK PREPARATION ###
 
 .PHONY: disk-prepare
-disk-prepare: $(progress_dir)/partitioned_disk $(progress_dir)/fs_installed
+disk-prepare: $(progress_dir)/partitioned_disk $(progress_dir)/fs_boot $(progress_dir)/fs_root
 
 $(progress_dir)/partitioned_disk: | $(progress_dir)
 	parted -s $(FLASH_DEV) -- \
-		mklabel gpt \
-		mkpart boot 0% 512MiB \
-		set 1 esp on \
-		mkpart root 512Mib 100%
+		mklabel msdos \
+		mkpart primary fat32 0% 512MiB \
+		set 1 boot on \
+		mkpart primary 512Mib 100%
 	touch $@
 
 $(progress_dir) $(progress_tmp_dir) $(root_dir) $(dist_dir):
@@ -57,14 +57,19 @@ $(progress_dir) $(progress_tmp_dir) $(root_dir) $(dist_dir):
 /usr/sbin/mkfs.f2fs:
 	emerge sys-fs/f2fs-tools
 
+/usr/sbin/mkfs.vfat:
+	emerge sys-fs/dosfstools
+
 partition_1 = $$(lsblk -nl -o PATH $(FLASH_DEV) | sed '2q;d')
 partition_2 = $$(lsblk -nl -o PATH $(FLASH_DEV) | sed '3q;d')
 
-$(progress_dir)/fs_installed: /usr/sbin/mkfs.f2fs | $(progress_dir)/partitioned_disk
-	$< -f $(partition_1) 
+$(progress_dir)/fs_root: /usr/sbin/mkfs.f2fs | $(progress_dir)/partitioned_disk
 	$< -f $(partition_2) 
 	touch $@
 
+$(progress_dir)/fs_boot: /usr/sbin/mkfs.vfat | $(progress_dir)/partitioned_disk
+	$< -F 32 $(partition_1) 
+	touch $@
 
 ## MOUNT / UMOUNT ##
 
